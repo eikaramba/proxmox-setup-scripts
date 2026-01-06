@@ -234,8 +234,8 @@ if [ "$GPU_TYPE" == "1" ]; then
     KFD_CGROUP_MAJOR=$(echo "$KFD_CGROUP_MAJOR_MINOR" | cut -d' ' -f1)
     KFD_CGROUP_MINOR=$(echo "$KFD_CGROUP_MAJOR_MINOR" | cut -d' ' -f2)
 
-    # search cgroup of /dev/dri/card0
-    DRICARD0_CGROUP_MAJOR_MINOR=$(ls -al /dev/dri/card0 | sed 's/,//' | awk '{print $5, $6}')
+    # search cgroup of /dev/dri/card1
+    DRICARD0_CGROUP_MAJOR_MINOR=$(ls -al /dev/dri/card1 | sed 's/,//' | awk '{print $5, $6}')
     DRICARD0_CGROUP_MAJOR=$(echo "$DRICARD0_CGROUP_MAJOR_MINOR" | cut -d' ' -f1)
     DRICARD0_CGROUP_MINOR=$(echo "$DRICARD0_CGROUP_MAJOR_MINOR" | cut -d' ' -f2)
 
