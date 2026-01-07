@@ -62,7 +62,8 @@ echo ""
 echo -e "${GREEN}>>> Updating system packages...${NC}"
 apt update && apt upgrade -y
 
-# Install build prerequisites
+
+# Install build prerequisites (including clang for OpenMP/ROCm)
 echo -e "${GREEN}>>> Installing build prerequisites...${NC}"
 apt install -y \
     build-essential \
@@ -79,7 +80,8 @@ apt install -y \
     pkg-config \
     libcurl4-openssl-dev \
     python3 \
-    python3-pip
+    python3-pip \
+    clang
 
 echo ""
 echo -e "${GREEN}==========================================${NC}"
@@ -340,12 +342,20 @@ ROCWMMA_FIX
     fi
 fi
 
+
 # Build llama.cpp
 echo ""
 echo -e "${GREEN}>>> Building llama.cpp with HIP support...${NC}"
 cd "${LLAMA_CPP_DIR}"
 git clean -xdf
 git submodule update --recursive
+
+# Use clang/clang++ for OpenMP/ROCm compatibility
+export CC=clang
+export CXX=clang++
+
+# Clean previous build directory to avoid cached compiler settings
+rm -rf build
 
 # Set cmake options
 CMAKE_OPTS=(
