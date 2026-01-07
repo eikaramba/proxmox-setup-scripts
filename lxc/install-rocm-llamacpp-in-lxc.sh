@@ -2,7 +2,7 @@
 
 # ROCm + llama.cpp installation for LXC containers (NO Docker)
 # This script installs AMD ROCm libraries and compiles llama.cpp with HIP support
-# Designed for AMD Strix Halo (gfx1151) on Ubuntu 24.04 LXC
+# Designed for AMD Strix Halo (gfx1151) on Ubuntu 24.04 LXC based on https://github.com/kyuz0/amd-strix-halo-toolboxes/blob/main/toolboxes/Dockerfile.rocm-7.1.1-rocwmma
 
 set -e
 
@@ -626,7 +626,7 @@ echo -e "  # Run inference"
 echo -e "  llama-cli -m /path/to/model.gguf -p \"Hello world\" -n 128"
 echo ""
 echo -e "  # Start API server"
-echo -e "  llama-server -m /path/to/model.gguf --host 0.0.0.0 --port 8080"
+echo -e "  llama-server -hf unsloth/Ministral-3-3B-Instruct-2512-GGUF:Q4_K_XL -ngl 99 --threads -1 --ctx-size 32684 --port 8080 --host 0.0.0.0
 echo ""
 echo -e "  # Start RPC server for distributed inference"
 echo -e "  rpc-server --host 0.0.0.0 --port 50052"
