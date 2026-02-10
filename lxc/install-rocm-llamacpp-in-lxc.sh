@@ -12,7 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../includes/colors.sh"
 
 # Configuration
-ROCM_VERSION="7.1.1"
+ROCM_VERSION="7.2"
 GPU_TARGET="gfx1151"  # AMD Strix Halo
 LLAMA_CPP_DIR="/opt/llama.cpp"
 ROCWMMA_ENABLED=true  # Enable rocWMMA for improved performance
@@ -360,6 +360,7 @@ rm -rf build
 # Set cmake options
 CMAKE_OPTS=(
     -DGGML_HIP=ON
+    -DCMAKE_HIP_FLAGS="--rocm-path=/opt/rocm -mllvm --amdgpu-unroll-threshold-local=600"
     -DAMDGPU_TARGETS="${GPU_TARGET}"
     -DCMAKE_BUILD_TYPE=Release
     -DGGML_RPC=ON
@@ -368,7 +369,6 @@ CMAKE_OPTS=(
     -DROCM_PATH=/opt/rocm
     -DHIP_PATH=/opt/rocm
     -DHIP_PLATFORM=amd
-    -DCMAKE_HIP_FLAGS="--rocm-path=/opt/rocm"
 )
 
 if [ "$ROCWMMA_ENABLED" = true ]; then
