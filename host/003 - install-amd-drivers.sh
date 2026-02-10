@@ -2,7 +2,12 @@
 # SCRIPT_DESC: Install AMD ROCm 7.2.X drivers
 # SCRIPT_DETECT: lsmod | grep -q amdgpu
 
-echo ">>> Adding AMD ROCm 7.2.X repository"
+# if uninstall needed
+# # Purge existing packages to resolve version conflicts (e.g. 7.2.0 vs 7.1.1)
+# apt purge -y "rocm-*" "amdgpu-*" "hsakmt-*" "rock-dkms" "rocm-core"
+# apt autoremove -y
+# # Clean up potential leftover directories
+# rm -rf /opt/rocm*
 mkdir --parents /etc/apt/keyrings
 chmod 0755 /etc/apt/keyrings
 wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | \
@@ -24,7 +29,7 @@ apt update
 
 echo ">>> Installing AMD ROCm drivers and tools"
 apt install -y rocm-smi rocminfo rocm-libs
-apt install -y nvtop radeontop
+apt install -y radeontop
 
 echo ">>> Adding root user to render and video groups for GPU access"
 usermod -a -G render,video root
