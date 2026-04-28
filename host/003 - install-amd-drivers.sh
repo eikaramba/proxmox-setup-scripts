@@ -2,6 +2,9 @@
 # SCRIPT_DESC: Install AMD ROCm 7.2.X drivers
 # SCRIPT_DETECT: lsmod | grep -q amdgpu
 
+# IMPORTANT: For Strix halo this is not needed, do not install DKMS drivers as mentioned by AMD themself. Also do not use amdgpuinstall. drivers come from KERNEL!
+# This only installs helper tools like rocm-smi, rocminfo, radeontop and the ROCm libraries. The actual amdgpu drivers are provided by the kernel and should not be installed via DKMS or amdgpu-install on Strix Halo.
+
 # if uninstall needed
 # # Purge existing packages to resolve version conflicts (e.g. 7.2.0 vs 7.1.1)
 # apt purge -y "rocm-*" "amdgpu-*" "hsakmt-*" "rock-dkms" "rocm-core"
