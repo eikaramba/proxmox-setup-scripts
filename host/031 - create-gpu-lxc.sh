@@ -6,6 +6,7 @@
 # - Uses persistent PCI by-path device names for consistent mapping.
 # - Derives cgroup major/minor from the SELECTED PCI device (not hardcoded card1).
 # - Skips KFD config cleanly if /dev/kfd is absent.
+# - Forwards NPU (AMD XDNA AIE) via /dev/accel/* when present on the host.
 # - Enables IPv6 SLAAC by default (toggleable).
 
 set -e
@@ -138,10 +139,26 @@ if [ "$GPU_TYPE" == "1" ]; then
         echo -e "${YELLOW}If you need ROCm, install AMD GPU drivers on the host first.${NC}"
     fi
 
+    # Detect NPU (AMD XDNA / AIE) exposed via the accel subsystem
+    # (/dev/accel/accelN, char major 236) by the amdxdna driver.
+    ACCEL_DEV=""
+    ACCEL_MAJOR=""
+    ACCEL_MINOR=""
+    ACCEL_BASENAME=""
+    for dev in /dev/accel/accel*; do
+        if [ -e "$dev" ]; then
+            ACCEL_DEV="$dev"
+            ACCEL_BASENAME="$(basename "$ACCEL_DEV")"
+            read -r ACCEL_MAJOR ACCEL_MINOR < <(get_dev_major_minor "$ACCEL_DEV")
+            break
+        fi
+    done
+
     echo -e "${GREEN}✓ Found AMD GPU at $PCI_ADDRESS${NC}"
     echo "  Card device:   $CARD_PATH -> $REAL_CARD"
     echo "  Render device: $RENDER_PATH -> $REAL_RENDER"
     echo "  KFD device:    $([ -e "/dev/kfd" ] && echo "✓ Available" || echo "✗ Not found (ROCm disabled)")"
+    echo "  NPU device:    $([ -n "$ACCEL_DEV" ] && echo "✓ $ACCEL_DEV" || echo "✗ Not found (NPU disabled)")"
 else
     echo -e "${GREEN}✓ Found NVIDIA GPU at $PCI_ADDRESS${NC}"
     echo "  Card device:   $CARD_PATH -> $REAL_CARD"
@@ -283,6 +300,16 @@ lxc.mount.entry: /dev/kfd dev/kfd none bind,optional,create=file"
         KFD_BLOCK="# /dev/kfd not present on host; KFD/ROCm passthrough skipped"
     fi
 
+    # NPU (AMD XDNA / AIE) via the accel subsystem — forward the accel device
+    # detected earlier in the AMD detection block (ACCEL_DEV).
+    if [ -n "$ACCEL_DEV" ]; then
+        NPU_BLOCK="# NPU (AMD XDNA AIE) via accel subsystem
+lxc.cgroup2.devices.allow: c ${ACCEL_MAJOR}:${ACCEL_MINOR} rwm
+lxc.mount.entry: ${ACCEL_DEV} dev/accel/${ACCEL_BASENAME} none bind,optional,create=file"
+    else
+        NPU_BLOCK="# No /dev/accel/* device on host; NPU passthrough skipped"
+    fi
+
     cat >> "/etc/pve/lxc/${CONTAINER_ID}.conf" << EOF
 # ===== AMD GPU Passthrough Configuration =====
 # PCI Address: $PCI_ADDRESS
@@ -292,6 +319,7 @@ lxc.mount.entry: /dev/kfd dev/kfd none bind,optional,create=file"
 lxc.cgroup2.devices.allow: c ${CARD_MAJOR}:${CARD_MINOR} rwm
 lxc.cgroup2.devices.allow: c ${RENDER_MAJOR}:${RENDER_MINOR} rwm
 ${KFD_BLOCK}
+${NPU_BLOCK}
 # Mount DRI devices using persistent PCI paths
 lxc.mount.entry: /dev/dri/by-path/pci-${PCI_ADDRESS}-card dev/dri/card0 none bind,optional,create=file
 lxc.mount.entry: /dev/dri/by-path/pci-${PCI_ADDRESS}-render dev/dri/renderD128 none bind,optional,create=file
